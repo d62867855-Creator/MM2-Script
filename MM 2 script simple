@@ -1,0 +1,203 @@
+-- MM2 SCRIPT - BY GEMINI (COMPLETE & FIXED)
+repeat task.wait() until game:IsLoaded()
+
+local Player = game.Players.LocalPlayer
+local Camera = game.Workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+
+for _, v in pairs(CoreGui:GetChildren()) do
+    if v.Name == "MM2_Complete_UI" then v:Destroy() end
+end
+
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.Name = "MM2_Complete_UI"
+
+local _G = {
+    WS = 16, JP = 50, 
+    Esp = false, Name = false, GunEsp = false,
+    Aimbot = false, TargetMode = "All",
+    AutoGun = false, LoopWS = false, LoopJP = false
+}
+
+-----------------------------------------------------------
+-- SMART DRAG (ANTI-SENSITIF)
+-----------------------------------------------------------
+local function MakeSmartDrag(frame)
+    local dragging, dragInput, dragStart, startPos
+    local dragThreshold = 5
+    
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragStart = input.Position; startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+            if dragStart then
+                local delta = (input.Position - dragStart).Magnitude
+                if delta > dragThreshold then dragging = true end
+            end
+        end
+    end)
+    RunService.RenderStepped:Connect(function()
+        if dragging and dragInput then
+            local delta = dragInput.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+-- MAIN FRAME (FIXED)
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.new(0, 480, 0, 360); Main.Position = UDim2.new(0.5, -240, 0.5, -180); Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15); Main.Visible = false
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 15)
+
+-- JUDUL UTAMA SCRIPT (DI SINI LUR!)
+local MainTitle = Instance.new("TextLabel", Main)
+MainTitle.Size = UDim2.new(1, 0, 0, 45); MainTitle.Text = "MM2 SCRIPT 🛠"; MainTitle.TextColor3 = Color3.fromRGB(0, 255, 150); MainTitle.Font = "GothamBold"; MainTitle.TextSize = 22; MainTitle.BackgroundTransparency = 1
+
+-- FLOAT BUTTON (IKON KECIL)
+local FloatBtn = Instance.new("TextButton", ScreenGui)
+FloatBtn.Size = UDim2.new(0, 55, 0, 55); FloatBtn.Position = UDim2.new(0, 15, 0.4, 0); FloatBtn.Text = "🛠"; FloatBtn.TextSize = 25; FloatBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30); FloatBtn.TextColor3 = Color3.fromRGB(0, 255, 150)
+Instance.new("UICorner", FloatBtn).CornerRadius = UDim.new(1, 0)
+MakeSmartDrag(FloatBtn)
+
+FloatBtn.MouseButton1Click:Connect(function()
+    Main.Visible = true; FloatBtn.Visible = false
+end)
+
+local Close = Instance.new("TextButton", Main)
+Close.Size = UDim2.new(0,30,0,30); Close.Position = UDim2.new(1,-35,0,7); Close.Text = "X"; Close.BackgroundColor3 = Color3.new(0.8,0,0); Close.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", Close)
+Close.MouseButton1Click:Connect(function()
+    Main.Visible = false; FloatBtn.Visible = true
+end)
+
+-- SIDEBAR
+local SideBar = Instance.new("Frame", Main)
+SideBar.Size = UDim2.new(0, 110, 1, -60); SideBar.Position = UDim2.new(0, 8, 0, 50); SideBar.BackgroundColor3 = Color3.fromRGB(25, 25, 25); Instance.new("UICorner", SideBar)
+
+local Content = Instance.new("Frame", Main)
+Content.Size = UDim2.new(1, -135, 1, -70); Content.Position = UDim2.new(0, 125, 0, 60); Content.BackgroundTransparency = 1
+
+local Tabs = {}
+local function CreateTab(name, titleWithIcon, active)
+    local F = Instance.new("ScrollingFrame", Content)
+    F.Size = UDim2.new(1, 0, 1, 0); F.BackgroundTransparency = 1; F.Visible = active; F.ScrollBarThickness = 0
+    
+    -- Judul Di Dalam Tab
+    local T = Instance.new("TextLabel", F)
+    T.Size = UDim2.new(1, 0, 0, 30); T.Text = titleWithIcon; T.TextColor3 = Color3.fromRGB(0, 255, 150); T.Font = "GothamBold"; T.TextSize = 16; T.BackgroundTransparency = 1; T.TextXAlignment = "Left"
+    
+    Tabs[name] = F; return F
+end
+
+local PTab = CreateTab("P", "👤 PLAYER TAB", true)
+local VTab = CreateTab("V", "👁 VISUAL TAB", false)
+local ATab = CreateTab("A", "⛓️ AIMBOT TAB", false)
+local FTab = CreateTab("F", "🛠 FUTURE TAB", false)
+
+local function CreateSideBtn(txt, y, target)
+    local B = Instance.new("TextButton", SideBar)
+    B.Size = UDim2.new(1, -10, 0, 35); B.Position = UDim2.new(0, 5, 0, y); B.BackgroundColor3 = Color3.fromRGB(40, 40, 40); B.Text = txt; B.TextColor3 = Color3.new(1, 1, 1); B.Font = "GothamBold"; B.TextSize = 11; Instance.new("UICorner", B)
+    B.MouseButton1Click:Connect(function() for _, v in pairs(Tabs) do v.Visible = false end target.Visible = true end)
+end
+
+CreateSideBtn("👤 Player", 10, PTab); CreateSideBtn("👁 Visual", 50, VTab); CreateSideBtn("⛓️ Aimbot", 90, ATab); CreateSideBtn("🛠 FUTURE", 130, FTab)
+
+-----------------------------------------------------------
+-- UI COMPONENTS (TIGHT & CLEAN)
+-----------------------------------------------------------
+local function NewToggle(p, txt, y, cb)
+    local B = Instance.new("TextButton", p); B.Size = UDim2.new(1, -10, 0, 38); B.Position = UDim2.new(0, 0, 0, y+35); B.BackgroundColor3 = Color3.fromRGB(35, 35, 35); B.Text = txt .. ": OFF"; B.TextColor3 = Color3.new(1,1,1); B.Font = "GothamBold"; Instance.new("UICorner", B)
+    local s = false
+    B.MouseButton1Click:Connect(function() s = not s; cb(s); B.Text = txt .. (s and ": ON" or ": OFF"); B.BackgroundColor3 = s and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(35, 35, 35) end)
+end
+
+local function NewInput(p, txt, y, cb)
+    local Box = Instance.new("TextBox", p); Box.Size = UDim2.new(0, 110, 0, 32); Box.Position = UDim2.new(0, 0, 0, y+35); Box.BackgroundColor3 = Color3.fromRGB(30, 30, 30); Box.TextColor3 = Color3.new(1,1,1); Box.Text = ""; Box.PlaceholderText = txt; Instance.new("UICorner", Box)
+    local S = Instance.new("TextButton", p); S.Size = UDim2.new(0, 50, 0, 32); S.Position = UDim2.new(0, 115, 0, y+35); S.BackgroundColor3 = Color3.fromRGB(0, 255, 150); S.Text = "SET"; S.TextColor3 = Color3.new(0,0,0); S.Font = "GothamBold"; Instance.new("UICorner", S)
+    S.MouseButton1Click:Connect(function() cb(tonumber(Box.Text)) end)
+end
+
+local function NewDropdown(p, y, opts, cb)
+    local DF = Instance.new("Frame", p); DF.Size = UDim2.new(1, -10, 0, 38); DF.Position = UDim2.new(0, 0, 0, y+35); DF.BackgroundColor3 = Color3.fromRGB(35, 35, 35); Instance.new("UICorner", DF)
+    local L = Instance.new("TextLabel", DF); L.Size = UDim2.new(1, -40, 1, 0); L.Position = UDim2.new(0, 10, 0, 0); L.Text = "Target: All"; L.TextColor3 = Color3.new(1,1,1); L.BackgroundTransparency = 1; L.TextXAlignment = "Left"; L.Font = "GothamBold"
+    local Ic = Instance.new("TextLabel", DF); Ic.Size = UDim2.new(0, 30, 1, 0); Ic.Position = UDim2.new(1, -35, 0, 0); Ic.Text = "<"; Ic.TextColor3 = Color3.fromRGB(0, 255, 150); Ic.BackgroundTransparency = 1; Ic.Font = "GothamBold"; Ic.TextSize = 18
+    local List = Instance.new("Frame", DF); List.Size = UDim2.new(1, 0, 0, #opts * 30); List.Position = UDim2.new(0, 0, 1, 5); List.BackgroundColor3 = Color3.fromRGB(20, 20, 20); List.Visible = false; List.ZIndex = 100; Instance.new("UICorner", List)
+    local B = Instance.new("TextButton", DF); B.Size = UDim2.new(1,0,1,0); B.BackgroundTransparency = 1; B.Text = ""
+    B.MouseButton1Click:Connect(function() List.Visible = not List.Visible; Ic.Text = List.Visible and "v" or "<" end)
+    for i, o in pairs(opts) do
+        local Ot = Instance.new("TextButton", List); Ot.Size = UDim2.new(1, 0, 0, 30); Ot.Position = UDim2.new(0, 0, 0, (i-1)*30); Ot.BackgroundColor3 = Color3.fromRGB(30, 30, 30); Ot.Text = o; Ot.TextColor3 = Color3.new(1,1,1); Ot.BorderSizePixel = 0; Ot.ZIndex = 101
+        Ot.MouseButton1Click:Connect(function() _G.TargetMode = o; L.Text = "Target: " .. o; List.Visible = false; Ic.Text = "<"; cb(o) end)
+    end
+end
+
+-----------------------------------------------------------
+-- FITUR & ENGINE
+-----------------------------------------------------------
+NewInput(PTab, "Walkspeed", 10, function(v) if v then _G.WS = v _G.LoopWS = true end end)
+NewInput(PTab, "JumpPower", 60, function(v) if v then _G.JP = v _G.LoopJP = true end end)
+NewToggle(VTab, "ESP Highlight", 10, function(s) _G.Esp = s end)
+NewToggle(VTab, "ESP Name", 60, function(s) _G.Name = s end)
+NewToggle(VTab, "ESP Revolver", 110, function(s) _G.GunEsp = s end)
+NewToggle(ATab, "Aimbot Lock", 10, function(s) _G.Aimbot = s end)
+NewDropdown(ATab, 60, {"All", "Murderer", "Sheriff"}, function(v) _G.TargetMode = v end)
+NewToggle(FTab, "Auto Take Revolver", 10, function(s) _G.AutoGun = s end)
+
+RunService.Heartbeat:Connect(function()
+    pcall(function()
+        local char = Player.Character
+        if char and char:FindFirstChild("Humanoid") then
+            if _G.LoopWS then char.Humanoid.WalkSpeed = _G.WS end
+            if _G.LoopJP then char.Humanoid.JumpPower = _G.JP end
+            local drop = workspace:FindFirstChild("GunDrop")
+            if _G.AutoGun and drop then char.HumanoidRootPart.CFrame = drop.CFrame end
+            if _G.Aimbot then
+                local t, d_min = nil, math.huge
+                for _, v in pairs(game.Players:GetPlayers()) do
+                    if v ~= Player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                        local isM = v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")
+                        local isS = v.Backpack:FindFirstChild("Gun") or v.Character:FindFirstChild("Gun")
+                        local ok = (_G.TargetMode == "All") or (_G.TargetMode == "Murderer" and isM) or (_G.TargetMode == "Sheriff" and isS)
+                        if ok then
+                            local d = (v.Character.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
+                            if d < d_min then d_min = d; t = v.Character.HumanoidRootPart end
+                        end
+                    end
+                end
+                if t then Camera.CFrame = CFrame.new(Camera.CFrame.Position, t.Position) end
+            end
+        end
+
+        for _, v in pairs(game.Players:GetPlayers()) do
+            if v ~= Player and v.Character then
+                local c = v.Character
+                local isM = v.Backpack:FindFirstChild("Knife") or c:FindFirstChild("Knife")
+                local isS = v.Backpack:FindFirstChild("Gun") or c:FindFirstChild("Gun")
+                local col = isM and Color3.new(1,0,0) or (isS and Color3.new(0,0,1) or Color3.new(0,1,0))
+                local hl = c:FindFirstChild("HL_F") or Instance.new("Highlight", c)
+                hl.Name = "HL_F"; hl.Enabled = _G.Esp; hl.FillColor = col; hl.DepthMode = "AlwaysOnTop"
+                
+                if _G.Name then
+                    local bb = c:FindFirstChild("N_F") or Instance.new("BillboardGui", c)
+                    bb.Name = "N_F"; bb.AlwaysOnTop = true; bb.Size = UDim2.new(0,100,0,20); bb.ExtentsOffset = Vector3.new(0,3.5,0)
+                    local l = bb:FindFirstChild("L") or Instance.new("TextLabel", bb)
+                    l.Name = "L"; l.Size = UDim2.new(1,0,1,0); l.BackgroundTransparency = 1; l.Text = v.Name; l.TextColor3 = col; l.Font = "GothamBold"; l.TextSize = 13
+                else
+                    if c:FindFirstChild("N_F") then c.N_F:Destroy() end
+                end
+            end
+        end
+        local gd = workspace:FindFirstChild("GunDrop")
+        if gd then
+            local ghl = gd:FindFirstChild("GHL_F") or Instance.new("Highlight", gd)
+            ghl.Name = "GHL_F"; ghl.Enabled = _G.GunEsp; ghl.FillColor = Color3.new(1,1,0); ghl.DepthMode = "AlwaysOnTop"
+        end
+    end)
+end)
+
